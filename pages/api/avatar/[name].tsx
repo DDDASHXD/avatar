@@ -27,89 +27,31 @@ export default async function handler(req: NextRequest) {
     >
       <g>
         <defs>
-          {/* Main complex gradient with multiple stops */}
-          <linearGradient
-            id="mainGradient"
-            x1={gradient.gradientDirection.x1}
-            y1={gradient.gradientDirection.y1}
-            x2={gradient.gradientDirection.x2}
-            y2={gradient.gradientDirection.y2}
-          >
-            <stop offset="0%" stopColor={gradient.colors[0]} />
-            <stop offset="33%" stopColor={gradient.colors[1]} />
-            <stop offset="66%" stopColor={gradient.colors[2]} />
-            <stop offset="100%" stopColor={gradient.colors[3]} />
-          </linearGradient>
-
-          {/* Mesh effect using multiple radial gradients */}
-          <radialGradient id="mesh1" cx="20%" cy="20%" r="60%">
-            <stop
-              offset="0%"
-              stopColor={gradient.colors[1]}
-              stopOpacity="0.8"
-            />
-            <stop
-              offset="100%"
-              stopColor={gradient.colors[1]}
-              stopOpacity="0"
-            />
-          </radialGradient>
-
-          <radialGradient id="mesh2" cx="80%" cy="30%" r="70%">
-            <stop
-              offset="0%"
-              stopColor={gradient.colors[2]}
-              stopOpacity="0.6"
-            />
-            <stop
-              offset="100%"
-              stopColor={gradient.colors[2]}
-              stopOpacity="0"
-            />
-          </radialGradient>
-
-          <radialGradient id="mesh3" cx="30%" cy="80%" r="65%">
-            <stop
-              offset="0%"
-              stopColor={gradient.colors[3]}
-              stopOpacity="0.7"
-            />
-            <stop
-              offset="100%"
-              stopColor={gradient.colors[3]}
-              stopOpacity="0"
-            />
-          </radialGradient>
-
-          {/* Additional diagonal gradient for more complexity */}
-          <linearGradient
-            id="overlay"
-            x1={gradient.gradientDirection.x2}
-            y1={gradient.gradientDirection.y2}
-            x2={gradient.gradientDirection.x1}
-            y2={gradient.gradientDirection.y1}
-          >
-            <stop
-              offset="0%"
-              stopColor={gradient.colors[3]}
-              stopOpacity="0.3"
-            />
-            <stop
-              offset="50%"
-              stopColor={gradient.colors[0]}
-              stopOpacity="0.1"
-            />
-            <stop
-              offset="100%"
-              stopColor={gradient.colors[2]}
-              stopOpacity="0.2"
-            />
+          {/* Create radial gradients for each mesh point */}
+          {gradient.meshPoints.map((point, index) => (
+            <radialGradient
+              key={index}
+              id={`meshGradient${index}`}
+              cx={point.x}
+              cy={point.y}
+              r={point.scale * 0.7}
+              gradientUnits="objectBoundingBox"
+            >
+              <stop offset="0%" stopColor={point.color} stopOpacity="0.8" />
+              <stop offset="100%" stopColor={point.color} stopOpacity="0" />
+            </radialGradient>
+          ))}
+          
+          {/* Fallback linear gradient */}
+          <linearGradient id="fallbackGradient" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor={gradient.fromColor} />
+            <stop offset="100%" stopColor={gradient.toColor} />
           </linearGradient>
         </defs>
-
-        {/* Base rectangle with main gradient */}
+        
+        {/* Base background with fallback gradient */}
         <rect
-          fill="url(#mainGradient)"
+          fill="url(#fallbackGradient)"
           x="0"
           y="0"
           width={size}
@@ -117,47 +59,22 @@ export default async function handler(req: NextRequest) {
           rx={rounded}
           ry={rounded}
         />
-
-        {/* Mesh effect layers */}
-        <rect
-          fill="url(#mesh1)"
-          x="0"
-          y="0"
-          width={size}
-          height={size}
-          rx={rounded}
-          ry={rounded}
-        />
-        <rect
-          fill="url(#mesh2)"
-          x="0"
-          y="0"
-          width={size}
-          height={size}
-          rx={rounded}
-          ry={rounded}
-        />
-        <rect
-          fill="url(#mesh3)"
-          x="0"
-          y="0"
-          width={size}
-          height={size}
-          rx={rounded}
-          ry={rounded}
-        />
-
-        {/* Overlay gradient for extra depth */}
-        <rect
-          fill="url(#overlay)"
-          x="0"
-          y="0"
-          width={size}
-          height={size}
-          rx={rounded}
-          ry={rounded}
-        />
-
+        
+        {/* Layer mesh gradient points */}
+        {gradient.meshPoints.map((point, index) => (
+          <rect
+            key={index}
+            fill={`url(#meshGradient${index})`}
+            x="0"
+            y="0"
+            width={size}
+            height={size}
+            rx={rounded}
+            ry={rounded}
+            style={{ mixBlendMode: "multiply" }}
+          />
+        ))}
+        
         {fileType === "svg" && !!text ? (
           <text
             x="50%"
@@ -168,7 +85,7 @@ export default async function handler(req: NextRequest) {
             fill="#fff"
             fontFamily="sans-serif"
             fontSize={(size * 0.9) / text.length}
-            style={{ filter: "drop-shadow(1px 1px 2px rgba(0,0,0,0.3))" }}
+            style={{ filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.3))" }}
           >
             {text}
           </text>
